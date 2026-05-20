@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*.db
+*.db-shm
+*.db-wal
+.venv/
+.python-version
+dist/
+*.egg-info/
+audit.log
+
+# Facilitator-only materials
+.hol/bugs/
+.hol/facilitator/
+
+*.png
+.DS_Store
+.playwright-mcp/
+/uv.lock

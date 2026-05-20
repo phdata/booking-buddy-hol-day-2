@@ -1,0 +1,1665 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fleet Ops — Operations Dashboard</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --navy: #0a2342;
+        --navy-light: #0d2d52;
+        --teal: #00b4d8;
+        --teal-dark: #0096b4;
+        --bg: #f0f4f8;
+        --card: #ffffff;
+        --text: #1a2b3c;
+        --text-muted: #6b7d8e;
+        --border: #dce4ed;
+        --bronze: #cd7f32;
+        --silver: #9e9e9e;
+        --gold: #f9a825;
+        --sidebar-w: 220px;
+      }
+      body {
+        font-family: "Inter", system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        width: var(--sidebar-w);
+        min-height: 100vh;
+        background: var(--navy);
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 100;
+      }
+      .sidebar-logo {
+        padding: 24px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .sidebar-logo h1 {
+        color: #fff;
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+      }
+      .sidebar-logo span {
+        color: var(--teal);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        display: block;
+        margin-top: 3px;
+      }
+      .nav {
+        padding: 12px 0;
+        flex: 1;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 20px;
+        color: rgba(255, 255, 255, 0.6);
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.15s;
+        border-left: 3px solid transparent;
+        text-decoration: none;
+      }
+      .nav-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+        color: #fff;
+      }
+      .nav-item.active {
+        background: rgba(0, 180, 216, 0.12);
+        color: var(--teal);
+        border-left-color: var(--teal);
+      }
+      .nav-item .icon {
+        font-size: 15px;
+        width: 20px;
+        text-align: center;
+      }
+      .sidebar-footer {
+        padding: 16px 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.35);
+        font-size: 11px;
+        line-height: 1.6;
+      }
+
+      /* Main */
+      .main {
+        margin-left: var(--sidebar-w);
+        flex: 1;
+        padding: 32px;
+        min-height: 100vh;
+      }
+      .page {
+        display: none;
+      }
+      .page.active {
+        display: block;
+      }
+
+      /* Page header */
+      .page-header {
+        margin-bottom: 28px;
+      }
+      .page-header h2 {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text);
+        letter-spacing: -0.4px;
+      }
+      .page-header p {
+        color: var(--text-muted);
+        font-size: 13px;
+        margin-top: 4px;
+      }
+
+      /* KPI grid */
+      .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      .kpi-card {
+        background: var(--card);
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid var(--border);
+        position: relative;
+        overflow: hidden;
+      }
+      .kpi-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--teal);
+      }
+      .kpi-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+      }
+      .kpi-value {
+        font-size: 30px;
+        font-weight: 700;
+        color: var(--text);
+        line-height: 1;
+      }
+      .kpi-sub {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 6px;
+      }
+      .kpi-icon {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 30px;
+        opacity: 0.08;
+      }
+
+      /* Cards */
+      .card {
+        background: var(--card);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+        margin-bottom: 20px;
+      }
+      .card-header {
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .card-header h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .card-body {
+        padding: 20px;
+      }
+
+      /* Tables */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      thead th {
+        text-align: left;
+        padding: 10px 16px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        color: var(--text-muted);
+        background: #f8fafc;
+        border-bottom: 1px solid var(--border);
+      }
+      tbody tr {
+        border-bottom: 1px solid var(--border);
+        transition: background 0.1s;
+      }
+      tbody tr:last-child {
+        border-bottom: none;
+      }
+      tbody tr:hover {
+        background: #f8fafc;
+      }
+      tbody td {
+        padding: 11px 16px;
+        color: var(--text);
+      }
+
+      /* Badges */
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 9px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+      }
+      .badge-bronze {
+        background: #fdf3e7;
+        color: #a05c10;
+      }
+      .badge-silver {
+        background: #f5f5f5;
+        color: #555;
+      }
+      .badge-gold {
+        background: #fff8e1;
+        color: #c67c00;
+      }
+      .badge-active {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+      .badge-drydock {
+        background: #fff3e0;
+        color: #bf360c;
+      }
+      .badge-retired {
+        background: #f5f5f5;
+        color: #757575;
+      }
+      .badge-confirmed {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+      .badge-cancelled {
+        background: #ffebee;
+        color: #c62828;
+      }
+      .badge-pending {
+        background: #fff3e0;
+        color: #bf360c;
+      }
+      .badge-sent {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+      .badge-failed {
+        background: #ffebee;
+        color: #c62828;
+      }
+      .badge-suppressed {
+        background: #f3e5f5;
+        color: #6a1b9a;
+      }
+
+      /* Buttons */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition: all 0.15s;
+        font-family: inherit;
+      }
+      .btn-primary {
+        background: var(--teal);
+        color: #fff;
+      }
+      .btn-primary:hover {
+        background: var(--teal-dark);
+      }
+      .btn-ghost {
+        background: transparent;
+        color: var(--text-muted);
+        border: 1px solid var(--border);
+      }
+      .btn-ghost:hover {
+        background: var(--bg);
+        color: var(--text);
+      }
+      .btn-danger {
+        background: #ffebee;
+        color: #c62828;
+        border: 1px solid #ffcdd2;
+      }
+      .btn-danger:hover {
+        background: #ffcdd2;
+      }
+      .btn-sm {
+        padding: 4px 10px;
+        font-size: 11px;
+      }
+
+      /* Forms */
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+      }
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .form-group.full {
+        grid-column: 1 / -1;
+      }
+      label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      input,
+      select,
+      textarea {
+        padding: 8px 11px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 13px;
+        font-family: inherit;
+        color: var(--text);
+        background: var(--card);
+        transition: border-color 0.15s;
+        outline: none;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--teal);
+        box-shadow: 0 0 0 3px rgba(0, 180, 216, 0.1);
+      }
+
+      /* Loading / empty */
+      .loading {
+        text-align: center;
+        padding: 36px;
+        color: var(--text-muted);
+        font-size: 13px;
+      }
+      .spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--border);
+        border-top-color: var(--teal);
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .empty {
+        text-align: center;
+        padding: 36px;
+        color: var(--text-muted);
+      }
+      .empty-icon {
+        font-size: 36px;
+        margin-bottom: 10px;
+      }
+
+      /* Toast */
+      .toast-container {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 999;
+      }
+      .toast {
+        padding: 11px 18px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 500;
+        max-width: 320px;
+        animation: slide-up 0.2s ease;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      }
+      .toast-success {
+        background: #1b5e20;
+        color: #fff;
+      }
+      .toast-error {
+        background: #b71c1c;
+        color: #fff;
+      }
+      .toast-info {
+        background: var(--navy);
+        color: #fff;
+      }
+      @keyframes slide-up {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Two-col layout */
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+
+      /* Detail panel */
+      .detail-panel {
+        background: var(--card);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+      .detail-panel h3 {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 14px;
+      }
+      .detail-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 7px;
+        font-size: 13px;
+      }
+      .detail-row .key {
+        color: var(--text-muted);
+        min-width: 130px;
+        font-weight: 500;
+      }
+
+      /* Divider */
+      .divider {
+        height: 1px;
+        background: var(--border);
+        margin: 16px 0;
+      }
+      .section-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+        margin-bottom: 10px;
+      }
+
+      /* Ship cards */
+      .ship-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      .ship-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px 18px 18px 22px;
+        position: relative;
+        overflow: hidden;
+      }
+      .ship-card-accent {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: var(--teal);
+      }
+      .ship-card h3 {
+        font-size: 15px;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+      .ship-meta {
+        font-size: 13px;
+        color: var(--text-muted);
+        line-height: 1.8;
+      }
+
+      /* Loyalty */
+      .points-big {
+        font-size: 44px;
+        font-weight: 800;
+        color: var(--text);
+        line-height: 1;
+      }
+      .tier-display {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .progress-wrap {
+        margin-top: 14px;
+      }
+      .progress-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-bottom: 5px;
+      }
+      .progress-bar {
+        height: 6px;
+        background: var(--border);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--teal), #0096b4);
+        border-radius: 3px;
+        transition: width 0.6s ease;
+      }
+
+      /* Guest selector */
+      .guest-selector {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .guest-selector label {
+        font-weight: 600;
+        white-space: nowrap;
+        font-size: 13px;
+      }
+      .guest-selector select {
+        flex: 1;
+        max-width: 280px;
+      }
+
+      /* Tx / notif colors */
+      .tx-booking_credit {
+        color: #2e7d32;
+      }
+      .tx-activity_credit {
+        color: #1565c0;
+      }
+      .tx-redemption {
+        color: #c62828;
+      }
+      .tx-adjustment {
+        color: #bf360c;
+      }
+      .notif-booking_confirmation {
+        color: #1565c0;
+      }
+      .notif-loyalty_update {
+        color: #6a1b9a;
+      }
+      .notif-itinerary_update {
+        color: #bf360c;
+      }
+      .notif-promotional {
+        color: #2e7d32;
+      }
+      .opted-in {
+        color: #2e7d32;
+        font-weight: 700;
+      }
+      .opted-out {
+        color: #c62828;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <h1>⚓ Fleet Ops</h1>
+        <span>Operations Dashboard</span>
+      </div>
+      <nav class="nav">
+        <a
+          class="nav-item active"
+          href="#"
+          onclick="
+            navigate('dashboard');
+            return false;
+          "
+          ><span class="icon">▦</span> Dashboard</a
+        >
+        <a
+          class="nav-item"
+          href="#"
+          onclick="
+            navigate('guests');
+            return false;
+          "
+          ><span class="icon">👥</span> Guests</a
+        >
+        <a
+          class="nav-item"
+          href="#"
+          onclick="
+            navigate('bookings');
+            return false;
+          "
+          ><span class="icon">📋</span> Bookings</a
+        >
+        <a
+          class="nav-item"
+          href="#"
+          onclick="
+            navigate('fleet');
+            return false;
+          "
+          ><span class="icon">🚢</span> Fleet</a
+        >
+        <a
+          class="nav-item"
+          href="#"
+          onclick="
+            navigate('loyalty');
+            return false;
+          "
+          ><span class="icon">⭐</span> Loyalty</a
+        >
+        <a
+          class="nav-item"
+          href="#"
+          onclick="
+            navigate('notifications');
+            return false;
+          "
+          ><span class="icon">🔔</span> Notifications</a
+        >
+      </nav>
+      <div class="sidebar-footer">
+        NCLH Fleet Ops Platform<br />4 microservices
+      </div>
+    </aside>
+
+    <main class="main">
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-header">
+          <h2>Operations Dashboard</h2>
+          <p>Live overview across all Fleet Ops services</p>
+        </div>
+        <div class="kpi-grid" id="kpi-grid">
+          <div class="kpi-card">
+            <div class="loading"><span class="spinner"></span></div>
+          </div>
+          <div class="kpi-card">
+            <div class="loading"><span class="spinner"></span></div>
+          </div>
+          <div class="kpi-card">
+            <div class="loading"><span class="spinner"></span></div>
+          </div>
+          <div class="kpi-card">
+            <div class="loading"><span class="spinner"></span></div>
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><h3>Recent Bookings</h3></div>
+            <div id="dash-bookings">
+              <div class="loading"><span class="spinner"></span>Loading...</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Fleet Status</h3></div>
+            <div id="dash-ships">
+              <div class="loading"><span class="spinner"></span>Loading...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GUESTS -->
+      <div class="page" id="page-guests">
+        <div class="page-header">
+          <h2>Guests</h2>
+          <p>Guest profiles and booking history from booking-service</p>
+        </div>
+        <div id="guests-content">
+          <div class="loading">
+            <span class="spinner"></span>Loading guests...
+          </div>
+        </div>
+      </div>
+
+      <!-- BOOKINGS -->
+      <div class="page" id="page-bookings">
+        <div class="page-header">
+          <h2>Bookings</h2>
+          <p>Create and manage reservations</p>
+        </div>
+        <div class="two-col">
+          <div>
+            <div class="card">
+              <div class="card-header"><h3>New Booking</h3></div>
+              <div class="card-body">
+                <form id="booking-form" onsubmit="submitBooking(event)">
+                  <div class="form-grid">
+                    <div class="form-group">
+                      <label>Guest</label
+                      ><select id="bf-guest" required>
+                        <option value="">Loading...</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>Itinerary</label
+                      ><select id="bf-itinerary" required>
+                        <option value="">Loading...</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>Cabin</label
+                      ><select id="bf-cabin" required>
+                        <option value="">Loading...</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>Sail Date</label
+                      ><input type="date" id="bf-sail-date" required />
+                    </div>
+                    <div class="form-group full">
+                      <button
+                        type="submit"
+                        class="btn btn-primary"
+                        style="width: 100%"
+                      >
+                        Create Booking
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-header">
+                <h3>All Bookings</h3>
+                <button
+                  class="btn btn-ghost btn-sm"
+                  onclick="refreshBookingsList()"
+                >
+                  Refresh
+                </button>
+              </div>
+              <div id="bookings-list">
+                <div class="loading">
+                  <span class="spinner"></span>Loading...
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FLEET -->
+      <div class="page" id="page-fleet">
+        <div class="page-header">
+          <h2>Fleet</h2>
+          <p>Ships, cabins, and sailings from fleet-service</p>
+        </div>
+        <div class="section-label">Ships</div>
+        <div id="ships-grid">
+          <div class="loading">
+            <span class="spinner"></span>Loading ships...
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Upcoming Sailings</h3></div>
+          <div id="sailings-list">
+            <div class="loading">
+              <span class="spinner"></span>Loading sailings...
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOYALTY -->
+      <div class="page" id="page-loyalty">
+        <div class="page-header">
+          <h2>Loyalty</h2>
+          <p>Tier status and points from loyalty-service</p>
+        </div>
+        <div class="guest-selector">
+          <label>Guest:</label>
+          <select id="loyalty-guest-select" onchange="loadLoyalty()">
+            <option value="">Select a guest...</option>
+          </select>
+        </div>
+        <div id="loyalty-content">
+          <div class="empty">
+            <div class="empty-icon">⭐</div>
+            <p>Select a guest to view loyalty status</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- NOTIFICATIONS -->
+      <div class="page" id="page-notifications">
+        <div class="page-header">
+          <h2>Notifications</h2>
+          <p>Guest contacts and communications from notifications-service</p>
+        </div>
+        <div class="two-col">
+          <div>
+            <div class="card">
+              <div class="card-header"><h3>Send Notification</h3></div>
+              <div class="card-body">
+                <form id="notif-form" onsubmit="sendNotification(event)">
+                  <div class="form-grid">
+                    <div class="form-group full">
+                      <label>Guest</label
+                      ><select id="nf-guest" required>
+                        <option value="">Select guest...</option>
+                      </select>
+                    </div>
+                    <div class="form-group full">
+                      <label>Type</label>
+                      <select id="nf-type" required>
+                        <option value="booking_confirmation">
+                          Booking Confirmation
+                        </option>
+                        <option value="itinerary_update">
+                          Itinerary Update
+                        </option>
+                        <option value="loyalty_update">Loyalty Update</option>
+                        <option value="promotional">Promotional</option>
+                      </select>
+                    </div>
+                    <div class="form-group full">
+                      <label>Subject</label
+                      ><input
+                        type="text"
+                        id="nf-subject"
+                        required
+                        placeholder="Notification subject..."
+                      />
+                    </div>
+                    <div class="form-group full">
+                      <label>Body</label
+                      ><textarea
+                        id="nf-body"
+                        rows="4"
+                        required
+                        placeholder="Message body..."
+                      ></textarea>
+                    </div>
+                    <div class="form-group full">
+                      <button
+                        type="submit"
+                        class="btn btn-primary"
+                        style="width: 100%"
+                      >
+                        Send Notification
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-header"><h3>Guest Contacts</h3></div>
+              <div id="contacts-list">
+                <div class="loading">
+                  <span class="spinner"></span>Loading...
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h3>Notification History</h3>
+            <select
+              id="notif-history-guest"
+              onchange="loadNotifHistory()"
+              style="font-size: 12px; padding: 4px 8px; border-radius: 6px"
+            >
+              <option value="">All guests</option>
+            </select>
+          </div>
+          <div id="notif-history">
+            <div class="loading"><span class="spinner"></span>Loading...</div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <div class="toast-container" id="toasts"></div>
+
+    <script>
+      const API = {
+        booking: "http://localhost:8000",
+        loyalty: "http://localhost:8001",
+        fleet: "http://localhost:8002",
+        notifications: "http://localhost:8003",
+      };
+      let guestCache = {};
+      const CABIN_TYPES = ["interior", "ocean_view", "balcony", "suite"];
+
+      const PAGE_ORDER = [
+        "dashboard",
+        "guests",
+        "bookings",
+        "fleet",
+        "loyalty",
+        "notifications",
+      ];
+
+      function navigate(page) {
+        document
+          .querySelectorAll(".page")
+          .forEach((p) => p.classList.remove("active"));
+        document
+          .querySelectorAll(".nav-item")
+          .forEach((n) => n.classList.remove("active"));
+        document.getElementById("page-" + page).classList.add("active");
+        document
+          .querySelectorAll(".nav-item")
+          [PAGE_ORDER.indexOf(page)].classList.add("active");
+        loadPage(page);
+      }
+
+      function loadPage(page) {
+        switch (page) {
+          case "dashboard":
+            loadDashboard();
+            break;
+          case "guests":
+            loadGuests();
+            break;
+          case "bookings":
+            loadBookingsPage();
+            break;
+          case "fleet":
+            loadFleet();
+            break;
+          case "loyalty":
+            loadLoyaltyPage();
+            break;
+          case "notifications":
+            loadNotificationsPage();
+            break;
+        }
+      }
+
+      async function api(svc, path, opts = {}) {
+        const res = await fetch(API[svc] + path, {
+          headers: { "Content-Type": "application/json" },
+          ...opts,
+        });
+        if (!res.ok) {
+          const e = await res.json().catch(() => ({ detail: res.statusText }));
+          throw new Error(e.detail || res.statusText);
+        }
+        return res.status === 204 ? null : res.json();
+      }
+
+      async function fetchAllGuests() {
+        return api("booking", "/guests/");
+      }
+
+      function toast(msg, type = "info") {
+        const el = document.createElement("div");
+        el.className = `toast toast-${type}`;
+        el.textContent = msg;
+        document.getElementById("toasts").appendChild(el);
+        setTimeout(() => el.remove(), 3500);
+      }
+
+      function fmtMoney(n) {
+        return (
+          "$" +
+          Number(n).toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })
+        );
+      }
+      function fmtDate(s) {
+        if (!s) return "—";
+        return new Date(
+          s + (s.includes("T") ? "" : "T00:00:00"),
+        ).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        });
+      }
+      function tierBadge(t) {
+        return `<span class="badge badge-${(t || "").toLowerCase()}">${t}</span>`;
+      }
+      function statusBadge(s) {
+        return `<span class="badge badge-${(s || "").toLowerCase()}">${s}</span>`;
+      }
+      function channelIcon(c) {
+        return { email: "✉️", sms: "📱", push: "🔔" }[c] || "—";
+      }
+
+      // ── Dashboard ──────────────────────────────────────────────────────────────
+      async function loadDashboard() {
+        const guests = await fetchAllGuests();
+        guests.forEach((g) => {
+          guestCache[g.id] = g;
+        });
+
+        const [shipsR, loyaltyR, bookingsR] = await Promise.allSettled([
+          api("fleet", "/ships/"),
+          Promise.allSettled(
+            guests.map((g) => api("loyalty", `/accounts/${g.id}`)),
+          ),
+          Promise.allSettled(
+            guests.map((g) => api("booking", `/bookings/guest/${g.id}`)),
+          ),
+        ]);
+
+        const ships = shipsR.status === "fulfilled" ? shipsR.value : [];
+        const loyalty =
+          loyaltyR.status === "fulfilled"
+            ? loyaltyR.value
+                .filter((r) => r.status === "fulfilled")
+                .map((r) => r.value)
+            : [];
+        const allBookings =
+          bookingsR.status === "fulfilled"
+            ? bookingsR.value
+                .filter((r) => r.status === "fulfilled")
+                .flatMap((r) => r.value)
+            : [];
+        const totalPoints = loyalty.reduce(
+          (s, a) => s + (a.total_points || 0),
+          0,
+        );
+        const activeBookings = allBookings.filter(
+          (b) => b.status === "confirmed",
+        ).length;
+
+        document.getElementById("kpi-grid").innerHTML = `
+    <div class="kpi-card"><div class="kpi-label">Guests</div><div class="kpi-value">${guests.length}</div><div class="kpi-sub">Registered profiles</div><div class="kpi-icon">👥</div></div>
+    <div class="kpi-card"><div class="kpi-label">Active Bookings</div><div class="kpi-value">${activeBookings}</div><div class="kpi-sub">Confirmed reservations</div><div class="kpi-icon">📋</div></div>
+    <div class="kpi-card"><div class="kpi-label">Active Ships</div><div class="kpi-value">${ships.filter((s) => s.status === "active").length}</div><div class="kpi-sub">of ${ships.length} total vessels</div><div class="kpi-icon">🚢</div></div>
+    <div class="kpi-card"><div class="kpi-label">Loyalty Points Issued</div><div class="kpi-value">${totalPoints.toLocaleString()}</div><div class="kpi-sub">Across ${loyalty.length} accounts</div><div class="kpi-icon">⭐</div></div>
+  `;
+
+        const sorted = allBookings.sort((a, b) => b.id - a.id).slice(0, 6);
+        document.getElementById("dash-bookings").innerHTML = sorted.length
+          ? `
+    <table><thead><tr><th>Guest</th><th>Status</th><th>Cabin</th><th>Total</th></tr></thead><tbody>
+    ${sorted
+      .map((b) => {
+        const g = guestCache[b.guest_id];
+        return `<tr style="cursor:pointer" onclick="navigate('bookings')">
+      <td>${g ? `${g.first_name} ${g.last_name}` : `Guest #${b.guest_id}`}</td>
+      <td>${statusBadge(b.status)}</td><td>${b.cabin_id}</td><td>${fmtMoney(b.total_price_usd)}</td>
+    </tr>`;
+      })
+      .join("")}</tbody></table>`
+          : `<div class="empty">No bookings</div>`;
+
+        document.getElementById("dash-ships").innerHTML = ships.length
+          ? `
+    <table><thead><tr><th>Ship</th><th>Class</th><th>Status</th><th>Capacity</th></tr></thead><tbody>
+    ${ships
+      .map(
+        (s) => `<tr style="cursor:pointer" onclick="navigate('fleet')">
+      <td><strong>${s.name}</strong></td><td>${s.class_name}</td><td>${statusBadge(s.status)}</td><td>${s.passenger_capacity.toLocaleString()}</td>
+    </tr>`,
+      )
+      .join("")}</tbody></table>`
+          : `<div class="empty">No ships</div>`;
+      }
+
+      // ── Guests ─────────────────────────────────────────────────────────────────
+      async function loadGuests() {
+        const el = document.getElementById("guests-content");
+        el.innerHTML = `<div class="loading"><span class="spinner"></span>Loading guests...</div>`;
+        try {
+          const guests = await fetchAllGuests();
+          guests.forEach((g) => {
+            guestCache[g.id] = g;
+          });
+          const loyaltyData = await Promise.allSettled(
+            guests.map((g) => api("loyalty", `/accounts/${g.id}`)),
+          );
+          el.innerHTML = `
+      <div class="card">
+        <div class="card-header"><h3>${guests.length} Guests</h3></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Tier</th><th>Points</th><th></th></tr></thead>
+          <tbody>${guests
+            .map((g, i) => {
+              const loy =
+                loyaltyData[i].status === "fulfilled"
+                  ? loyaltyData[i].value
+                  : null;
+              return `<tr style="cursor:pointer" onclick="showGuestDetail(${g.id})">
+              <td><strong>${g.first_name} ${g.last_name}</strong></td>
+              <td style="color:var(--text-muted)">${g.email}</td>
+              <td style="color:var(--text-muted)">${g.phone || "—"}</td>
+              <td>${loy ? tierBadge(loy.tier) : "—"}</td>
+              <td>${loy ? loy.total_points.toLocaleString() : "—"}</td>
+              <td><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();showGuestDetail(${g.id})">View →</button></td>
+            </tr>`;
+            })
+            .join("")}</tbody>
+        </table></div>
+      </div>
+      <div id="guest-detail"></div>`;
+        } catch (e) {
+          el.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>${e.message}</p></div>`;
+        }
+      }
+
+      async function showGuestDetail(guestId) {
+        const el = document.getElementById("guest-detail");
+        el.innerHTML = `<div class="loading"><span class="spinner"></span>Loading...</div>`;
+        try {
+          const [guestR, bookingsR, loyaltyR] = await Promise.allSettled([
+            api("booking", `/guests/${guestId}`),
+            api("booking", `/bookings/guest/${guestId}`),
+            api("loyalty", `/accounts/${guestId}`),
+          ]);
+          const g = guestR.value;
+          const bk = bookingsR.status === "fulfilled" ? bookingsR.value : [];
+          const loy = loyaltyR.status === "fulfilled" ? loyaltyR.value : null;
+          el.innerHTML = `
+      <div class="detail-panel">
+        <h3>👤 ${g.first_name} ${g.last_name} &nbsp; ${loy ? tierBadge(loy.tier) : ""}</h3>
+        <div class="detail-row"><span class="key">Email</span><span>${g.email}</span></div>
+        <div class="detail-row"><span class="key">Member since</span><span>${fmtDate(g.created_at)}</span></div>
+        ${loy ? `<div class="detail-row"><span class="key">Loyalty points</span><span><strong>${loy.total_points.toLocaleString()}</strong></span></div>` : ""}
+        <div class="divider"></div>
+        <div class="section-label">Bookings (${bk.length})</div>
+        ${
+          bk.length
+            ? `<table><thead><tr><th>#</th><th>Cabin Type</th><th>Status</th><th>Total</th></tr></thead><tbody>
+          ${bk.map((b) => `<tr><td>#${b.id}</td><td>${b.cabin_id}</td><td>${statusBadge(b.status)}</td><td>${fmtMoney(b.total_price_usd)}</td></tr>`).join("")}
+        </tbody></table>`
+            : `<p style="color:var(--text-muted);font-size:13px">No bookings.</p>`
+        }
+      </div>`;
+        } catch (e) {
+          el.innerHTML = `<div class="empty">${e.message}</div>`;
+        }
+      }
+
+      // ── Bookings ───────────────────────────────────────────────────────────────
+      async function loadBookingsPage() {
+        try {
+          const guests = await fetchAllGuests();
+          guests.forEach((g) => {
+            guestCache[g.id] = g;
+          });
+          const itineraries = await api("booking", "/itineraries/");
+
+          const gSel = document.getElementById("bf-guest");
+          gSel.innerHTML =
+            '<option value="">Select guest...</option>' +
+            guests
+              .map(
+                (g) =>
+                  `<option value="${g.id}">${g.first_name} ${g.last_name}</option>`,
+              )
+              .join("");
+
+          const iSel = document.getElementById("bf-itinerary");
+          iSel.innerHTML =
+            '<option value="">Select itinerary...</option>' +
+            itineraries
+              .map(
+                (i) =>
+                  `<option value="${i.id}">${i.name} — ${i.departure_port} (${i.duration_nights}n)</option>`,
+              )
+              .join("");
+
+          const cabins = await api("booking", "/cabins/");
+          const cSel = document.getElementById("bf-cabin");
+          cSel.innerHTML =
+            '<option value="">Select cabin...</option>' +
+            cabins
+              .map(
+                (c) =>
+                  `<option value="${c.id}">Cabin ${c.cabin_number} (${c.category})</option>`,
+              )
+              .join("");
+
+          await refreshBookingsList();
+        } catch (e) {
+          toast("Failed to load bookings page: " + e.message, "error");
+        }
+      }
+
+      async function refreshBookingsList() {
+        const el = document.getElementById("bookings-list");
+        el.innerHTML = `<div class="loading"><span class="spinner"></span>Loading...</div>`;
+        try {
+          const guests = Object.values(guestCache);
+          const allBookings = (
+            await Promise.allSettled(
+              guests.map((g) => api("booking", `/bookings/guest/${g.id}`)),
+            )
+          )
+            .filter((r) => r.status === "fulfilled")
+            .flatMap((r) => r.value)
+            .sort((a, b) => b.id - a.id);
+          el.innerHTML = allBookings.length
+            ? `
+      <div class="table-wrap"><table>
+        <thead><tr><th>ID</th><th>Guest</th><th>Cabin</th><th>Status</th><th>Total</th><th></th></tr></thead>
+        <tbody>${allBookings
+          .map((b) => {
+            const g = guestCache[b.guest_id];
+            return `<tr>
+            <td style="color:var(--text-muted)">#${b.id}</td>
+            <td>${g ? `${g.first_name} ${g.last_name}` : `Guest #${b.guest_id}`}</td>
+            <td>${b.cabin_id}</td><td>${statusBadge(b.status)}</td><td>${fmtMoney(b.total_price_usd)}</td>
+            <td>${b.status !== "cancelled" ? `<button class="btn btn-danger btn-sm" onclick="cancelBooking(${b.id})">Cancel</button>` : ""}</td>
+          </tr>`;
+          })
+          .join("")}</tbody>
+      </table></div>`
+            : `<div class="empty"><div class="empty-icon">📋</div><p>No bookings</p></div>`;
+        } catch (e) {
+          el.innerHTML = `<div class="empty">${e.message}</div>`;
+        }
+      }
+
+      async function submitBooking(e) {
+        e.preventDefault();
+        const body = {
+          guest_id: parseInt(document.getElementById("bf-guest").value),
+          itinerary_id: parseInt(document.getElementById("bf-itinerary").value),
+          cabin_id: parseInt(document.getElementById("bf-cabin").value),
+          sail_date: document.getElementById("bf-sail-date").value,
+        };
+        try {
+          await api("booking", "/bookings/", {
+            method: "POST",
+            body: JSON.stringify(body),
+          });
+          toast("Booking created!", "success");
+          document.getElementById("booking-form").reset();
+          await refreshBookingsList();
+        } catch (e) {
+          toast("Error: " + e.message, "error");
+        }
+      }
+
+      async function cancelBooking(id) {
+        if (!confirm(`Cancel booking #${id}?`)) return;
+        try {
+          await api("booking", `/bookings/${id}`, { method: "DELETE" });
+          toast(`Booking #${id} cancelled`, "success");
+          await refreshBookingsList();
+        } catch (e) {
+          toast("Error: " + e.message, "error");
+        }
+      }
+
+      // ── Fleet ──────────────────────────────────────────────────────────────────
+      async function loadFleet() {
+        try {
+          const [ships, sailings] = await Promise.all([
+            api("fleet", "/ships/"),
+            api("fleet", "/sailings/"),
+          ]);
+          document.getElementById("ships-grid").innerHTML = ships.length
+            ? `<div class="ship-grid">${ships
+                .map(
+                  (s) => `
+      <div class="ship-card">
+        <div class="ship-card-accent"></div>
+        <h3>${s.name}</h3>
+        <div class="ship-meta">
+          <div style="margin-bottom:6px">${statusBadge(s.status)} &nbsp;<span style="font-size:12px">${s.class_name} class</span></div>
+          <div>🏠 ${s.home_port}</div>
+          <div>👥 ${s.passenger_capacity.toLocaleString()} passengers &nbsp;·&nbsp; 🛏 ${s.total_cabins} cabins</div>
+          <div style="color:#bbb;font-size:11px;margin-top:4px">IMO ${s.imo_number}</div>
+        </div>
+      </div>`,
+                )
+                .join("")}</div>`
+            : `<div class="empty">No ships found</div>`;
+
+          const upcoming = sailings
+            .filter((s) => new Date(s.departure_date) >= new Date())
+            .sort(
+              (a, b) => new Date(a.departure_date) - new Date(b.departure_date),
+            );
+          document.getElementById("sailings-list").innerHTML = upcoming.length
+            ? `
+      <div class="table-wrap"><table>
+        <thead><tr><th>Itinerary</th><th>Departure</th><th>Arrival</th><th>From</th><th>To</th></tr></thead>
+        <tbody>${upcoming
+          .map(
+            (s) => `<tr>
+          <td><strong>${s.itinerary_name}</strong></td>
+          <td>${fmtDate(s.departure_date)}</td><td>${fmtDate(s.arrival_date)}</td>
+          <td>${s.departure_port}</td><td>${s.arrival_port}</td>
+        </tr>`,
+          )
+          .join("")}</tbody>
+      </table></div>`
+            : `<div class="empty" style="padding:20px">No upcoming sailings</div>`;
+        } catch (e) {
+          document.getElementById("ships-grid").innerHTML =
+            `<div class="empty">Error: ${e.message}</div>`;
+        }
+      }
+
+      // ── Loyalty ────────────────────────────────────────────────────────────────
+      async function loadLoyaltyPage() {
+        const guests = Object.values(guestCache).length
+          ? Object.values(guestCache)
+          : await fetchAllGuests();
+        guests.forEach((g) => {
+          guestCache[g.id] = g;
+        });
+        const sel = document.getElementById("loyalty-guest-select");
+        sel.innerHTML =
+          '<option value="">Select a guest...</option>' +
+          guests
+            .map(
+              (g) =>
+                `<option value="${g.id}">${g.first_name} ${g.last_name}</option>`,
+            )
+            .join("");
+      }
+
+      async function loadLoyalty() {
+        const guestId = document.getElementById("loyalty-guest-select").value;
+        const el = document.getElementById("loyalty-content");
+        if (!guestId) {
+          el.innerHTML = `<div class="empty"><div class="empty-icon">⭐</div><p>Select a guest</p></div>`;
+          return;
+        }
+        el.innerHTML = `<div class="loading"><span class="spinner"></span>Loading loyalty data...</div>`;
+        try {
+          const [account, txns] = await Promise.all([
+            api("loyalty", `/accounts/${guestId}`),
+            api("loyalty", `/accounts/${guestId}/transactions?limit=20`),
+          ]);
+          const tierNext =
+            account.tier === "Bronze"
+              ? 1000
+              : account.tier === "Silver"
+                ? 5000
+                : null;
+          const tierPrev =
+            account.tier === "Bronze"
+              ? 0
+              : account.tier === "Silver"
+                ? 1000
+                : 5000;
+          const pct = tierNext
+            ? Math.min(
+                100,
+                ((account.total_points - tierPrev) / (tierNext - tierPrev)) *
+                  100,
+              )
+            : 100;
+          const nextTierName =
+            account.tier === "Bronze"
+              ? "Silver"
+              : account.tier === "Silver"
+                ? "Gold"
+                : null;
+
+          el.innerHTML = `
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header"><h3>Account Status</h3></div>
+          <div class="card-body">
+            <div class="tier-display">
+              <div class="points-big">${account.total_points.toLocaleString()}</div>
+              ${tierBadge(account.tier)}
+            </div>
+            <div class="detail-row"><span class="key">Name</span><span>${account.guest_name}</span></div>
+            <div class="detail-row"><span class="key">Email</span><span style="color:var(--text-muted)">${account.guest_email}</span></div>
+            <div class="detail-row"><span class="key">Enrolled</span><span>${fmtDate(account.enrolled_at)}</span></div>
+            ${
+              tierNext
+                ? `<div class="progress-wrap">
+              <div class="progress-label"><span>Progress to ${nextTierName}</span><span>${account.total_points.toLocaleString()} / ${tierNext.toLocaleString()}</span></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+            </div>`
+                : `<div style="color:#c67c00;font-size:12px;margin-top:12px;font-weight:600">🏆 Gold — maximum tier</div>`
+            }
+            <div class="divider"></div>
+            <div class="section-label">Award / Redeem Points</div>
+            <div style="display:flex;gap:8px;margin-bottom:10px">
+              <input type="number" id="pts-amount" placeholder="Points" min="1" style="flex:1">
+              <input type="text" id="pts-desc" placeholder="Description" style="flex:2">
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-primary" onclick="awardPoints(${guestId})">+ Award</button>
+              <button class="btn btn-ghost" onclick="redeemPoints(${guestId})">− Redeem</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Transaction History</h3></div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Type</th><th>Points</th><th>Description</th><th>Date</th></tr></thead>
+            <tbody>${
+              txns.length
+                ? txns
+                    .map(
+                      (t) => `<tr>
+              <td><span class="tx-${t.transaction_type}" style="font-size:12px;font-weight:600">${t.transaction_type.replace(/_/g, " ")}</span></td>
+              <td><strong>${t.amount > 0 ? "+" : ""}${t.amount.toLocaleString()}</strong></td>
+              <td style="font-size:12px;color:var(--text-muted)">${t.description}</td>
+              <td style="font-size:12px">${fmtDate(t.created_at)}</td>
+            </tr>`,
+                    )
+                    .join("")
+                : `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px">No transactions</td></tr>`
+            }</tbody>
+          </table></div>
+        </div>
+      </div>`;
+        } catch (e) {
+          el.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>${e.message}</p></div>`;
+        }
+      }
+
+      async function awardPoints(guestId) {
+        const amount = parseInt(document.getElementById("pts-amount").value);
+        const desc = document.getElementById("pts-desc").value;
+        if (!amount || !desc) {
+          toast("Enter amount and description", "error");
+          return;
+        }
+        try {
+          await api("loyalty", `/accounts/${guestId}/award`, {
+            method: "POST",
+            body: JSON.stringify({
+              amount,
+              transaction_type: "booking_credit",
+              description: desc,
+            }),
+          });
+          toast(`${amount} points awarded!`, "success");
+          loadLoyalty();
+        } catch (e) {
+          toast("Error: " + e.message, "error");
+        }
+      }
+
+      async function redeemPoints(guestId) {
+        const amount = parseInt(document.getElementById("pts-amount").value);
+        const desc = document.getElementById("pts-desc").value;
+        if (!amount || !desc) {
+          toast("Enter amount and description", "error");
+          return;
+        }
+        try {
+          await api("loyalty", `/accounts/${guestId}/redeem`, {
+            method: "POST",
+            body: JSON.stringify({ amount, description: desc }),
+          });
+          toast(`${amount} points redeemed!`, "success");
+          loadLoyalty();
+        } catch (e) {
+          toast("Error: " + e.message, "error");
+        }
+      }
+
+      // ── Notifications ──────────────────────────────────────────────────────────
+      async function loadNotificationsPage() {
+        const guests = Object.values(guestCache).length
+          ? Object.values(guestCache)
+          : await fetchAllGuests();
+        guests.forEach((g) => {
+          guestCache[g.id] = g;
+        });
+
+        const gSel = document.getElementById("nf-guest");
+        gSel.innerHTML =
+          '<option value="">Select guest...</option>' +
+          guests
+            .map(
+              (g) =>
+                `<option value="${g.id}">${g.first_name} ${g.last_name}</option>`,
+            )
+            .join("");
+
+        const hSel = document.getElementById("notif-history-guest");
+        hSel.innerHTML =
+          '<option value="">All guests</option>' +
+          guests
+            .map(
+              (g) =>
+                `<option value="${g.id}">${g.first_name} ${g.last_name}</option>`,
+            )
+            .join("");
+
+        const contacts = (
+          await Promise.allSettled(
+            guests.map((g) => api("notifications", `/contacts/${g.id}`)),
+          )
+        )
+          .filter((r) => r.status === "fulfilled")
+          .map((r) => r.value);
+        document.getElementById("contacts-list").innerHTML = contacts.length
+          ? `
+    <div class="table-wrap"><table>
+      <thead><tr><th>Guest</th><th>Channel</th><th>Email</th><th>Opted In</th></tr></thead>
+      <tbody>${contacts
+        .map((c) => {
+          const g = guestCache[c.guest_id];
+          return `<tr>
+        <td><strong>${g ? `${g.first_name} ${g.last_name}` : `Guest #${c.guest_id}`}</strong></td>
+        <td>${channelIcon(c.preferred_channel)} ${c.preferred_channel}</td>
+        <td style="font-size:12px;color:var(--text-muted)">${c.email}</td>
+        <td class="${c.opted_in ? "opted-in" : "opted-out"}">${c.opted_in ? "✓ Yes" : "✗ No"}</td>
+      </tr>`;
+        })
+        .join("")}</tbody>
+    </table></div>`
+          : `<div class="empty">No contacts found</div>`;
+
+        await loadNotifHistory();
+      }
+
+      async function loadNotifHistory() {
+        const el = document.getElementById("notif-history");
+        const guestId = document.getElementById("notif-history-guest").value;
+        el.innerHTML = `<div class="loading"><span class="spinner"></span>Loading...</div>`;
+        try {
+          const targets = guestId
+            ? [{ id: parseInt(guestId) }]
+            : Object.values(guestCache);
+          const histories = await Promise.allSettled(
+            targets.map((g) =>
+              api("notifications", `/contacts/${g.id}/history`),
+            ),
+          );
+          const all = histories
+            .filter((r) => r.status === "fulfilled")
+            .flatMap((r) => r.value)
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .slice(0, 30);
+          el.innerHTML = all.length
+            ? `
+      <div class="table-wrap"><table>
+        <thead><tr><th>Type</th><th>Subject</th><th>Channel</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>${all
+          .map(
+            (n) => `<tr>
+          <td><span class="notif-${n.notification_type}" style="font-size:12px;font-weight:600">${n.notification_type.replace(/_/g, " ")}</span></td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px">${n.subject}</td>
+          <td>${channelIcon(n.channel)} ${n.channel}</td>
+          <td>${statusBadge(n.status)}</td>
+          <td style="font-size:12px">${fmtDate(n.created_at)}</td>
+        </tr>`,
+          )
+          .join("")}</tbody>
+      </table></div>`
+            : `<div class="empty" style="padding:24px">No notifications found</div>`;
+        } catch (e) {
+          el.innerHTML = `<div class="empty">${e.message}</div>`;
+        }
+      }
+
+      async function sendNotification(e) {
+        e.preventDefault();
+        const body = {
+          guest_id: parseInt(document.getElementById("nf-guest").value),
+          notification_type: document.getElementById("nf-type").value,
+          subject: document.getElementById("nf-subject").value,
+          body: document.getElementById("nf-body").value,
+        };
+        try {
+          const result = await api("notifications", "/notify", {
+            method: "POST",
+            body: JSON.stringify(body),
+          });
+          toast(
+            result.status === "suppressed"
+              ? "Suppressed — guest opted out"
+              : "Notification sent!",
+            result.status === "suppressed" ? "info" : "success",
+          );
+          document.getElementById("notif-form").reset();
+          await loadNotifHistory();
+        } catch (e) {
+          toast("Error: " + e.message, "error");
+        }
+      }
+
+      // Init
+      loadDashboard();
+    </script>
+  </body>
+</html>
